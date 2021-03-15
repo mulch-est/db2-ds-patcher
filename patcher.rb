@@ -45,7 +45,7 @@ def one_exec(rom_filepath)
   ascii_file_edit_option = gets.chop
 
   if ascii_file_edit_option == "y" || ascii_file_edit_option == "Y"
-    replaceAscii(rom_filepath, "buttonDebug", "button")
+    replaceHex(rom_filepath, "buttonDebug", "button     ")
     #in the xml menu files for de blob 2 (DS) there are four splash screens
     #these screens were able to be skipped during debugging by pressing L
     
