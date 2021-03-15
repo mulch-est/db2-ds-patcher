@@ -56,6 +56,9 @@ def one_exec(rom_filepath)
     #</widget>
     #which can be found within each splash screen
     
+    rom_filechars = File.size(rom_filepath)
+    puts "now: #{File.basename(rom_filepath)} [#{rom_filechars} bytes]"
+    
     menu()
   elsif ascii_file_edit_option == "n" || ascii_file_edit_option == "N" #non-header auto ascii replace
     menu()
