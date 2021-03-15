@@ -28,7 +28,7 @@ def one()
   #open file and begin patch
   if File.exists?(rom_filepath)
     rom_filechars = File.size(rom_filepath)
-    puts "Opened #{File.basename(rom_filepath)} [#{dialogue_filechars} bytes]"
+    puts "Opened #{File.basename(rom_filepath)} [#{rom_filechars} bytes]"
 
     one_exec(rom_filepath)
     
