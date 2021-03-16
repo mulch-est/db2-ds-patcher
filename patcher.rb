@@ -15,65 +15,68 @@ def one()
   else
     puts "Your file at (#{rom_filepath}) could not be located. Please try again"
     one()
+    #maybe add an option to stop loading file here
   end
 end
 
 def one_exec(rom_filepath)
   puts "Are you sure you want to apply the Splash Screen Skip patch? Y/N"
-  puts "This will not make a copy! Please ensure you have an extra copy before proceeding!"
   ascii_file_edit_option = gets.chop
 
   if ascii_file_edit_option == "y" || ascii_file_edit_option == "Y"
     data = nil
 
-	puts "reading..."
-	File.open(rom_filepath, "rb") do |file|
-	  data = file.read
-	end
-	
-	puts "unpacking..."
-	control_data = data.unpack('H*')[0]
-	
-	puts "patching..."
-	#62 75 74 74 6F 6E 44 65 62 75 67 to 62 75 74 74 6F 6E 20 20 20 20 20
-	puts "(#{"buttonDebug".unpack('H*')[0]} --> #{"button     ".unpack('H*')[0]})"
-	patchdata = control_data.gsub("buttonDebug".unpack('H*')[0], "button     ".unpack('H*')[0])
-	
-	puts "packing..."
-	control_data = [control_data].pack('H*')
-	patchdata = [patchdata].pack('H*')
-	
-	puts "fixing..."
-	#replace all 0d 0a pairs with 0a because of a windows newline quirk
-	File.write('mid.bin', control_data)
-	File.write('pat.bin', patchdata)
+    puts "reading..."
+    File.open(rom_filepath, "rb") do |file|
+      data = file.read
+    end
 
-	File.open('control.nds', 'wb') do |converted|
-	  File.open('mid.bin', 'rb').each_line do |line|
-	  #control_data.each_line do |line|
-		converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
-	  end
-	end
-	
-	File.open('converted.nds', 'wb') do |converted|
-	  File.open('pat.bin', 'rb').each_line do |line|
-	  #control_data.each_line do |line|
-		converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
-	  end
-	end
-    
-    #in the xml menu files for de blob 2 (DS) there are four splash screens
-    #these screens were able to be skipped during debugging by pressing L
-    
-    #this is referenced by the code:
-    #<widget type="button">
-    #  <buttonDebug key="L" />
-    #  <item menu="Menus\NEXT_MENU.xml" timer="240" quickLoad="true" menuDontStore="true" selectable="false"/>
-    #</widget>
-    #which can be found within each splash screen
-    
-    rom_filechars = File.size(rom_filepath)
-    puts "now: #{File.basename(rom_filepath)} [#{rom_filechars} bytes]"
+    puts "unpacking..."
+    control_data = data.unpack('H*')[0]
+
+    puts "patching..."
+    #62 75 74 74 6F 6E 44 65 62 75 67 --> 62 75 74 74 6F 6E 20 20 20 20 20
+    puts "(#{"buttonDebug".unpack('H*')[0]} --> #{"button     ".unpack('H*')[0]})"
+    patchdata = control_data.gsub("buttonDebug".unpack('H*')[0], "button     ".unpack('H*')[0])
+
+	#in the xml menu files for de blob 2 (DS) there are four splash screens
+	#these screens were able to be skipped during debugging by pressing L
+
+	#this is referenced by the code:
+	#<widget type="button">
+	#  <buttonDebug key="L" />
+	#  <item menu="Menus\NEXT_MENU.xml" timer="240" quickLoad="true" menuDontStore="true" selectable="false"/>
+	#</widget>
+	#which can be found within each splash screen
+	#by altering the tag <buttonDebug key="L" /> to read <button key="L" />, this function can be used
+	#five spaces are used to replace Debug within the tag to prevent changing the file size
+
+    puts "packing..."
+    control_data = [control_data].pack('H*')
+    patchdata = [patchdata].pack('H*')
+
+    puts "fixing..."
+    #without saving data like this and instead using control_data.each_line I end up losing ~1KiB of data
+    File.write('mid.bin', control_data)
+    File.write('pat.bin', patchdata)
+
+    #replace all 0d 0a pairs with 0a because of a windows newline quirk
+    File.open('control.nds', 'wb') do |converted|
+      File.open('mid.bin', 'rb').each_line do |line|
+	#control_data.each_line do |line|
+	converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
+      end
+    end
+
+    patchfile_name = "#{File.basename(rom_filepath, ".nds")}_patched.nds"
+    File.open(patchfile_name, 'wb') do |converted|
+      File.open('pat.bin', 'rb').each_line do |line|
+	converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
+      end
+    end
+
+    patch_filechars = File.size(patchfile_name)
+    puts "now: #{File.basename(patchfile_name)} [#{patch_filechars} bytes]"
     
     menu()
   elsif ascii_file_edit_option == "n" || ascii_file_edit_option == "N" #non-header auto ascii replace
