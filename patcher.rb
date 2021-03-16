@@ -24,7 +24,44 @@ def one_exec(rom_filepath)
   ascii_file_edit_option = gets.chop
 
   if ascii_file_edit_option == "y" || ascii_file_edit_option == "Y"
-    replaceHex(rom_filepath, "buttonDebug".unpack('H*')[0], "button     ".unpack('H*')[0])
+    data = nil
+
+	puts "reading..."
+	File.open(rom_filepath, "rb") do |file|
+	  data = file.read
+	end
+	
+	puts "unpacking..."
+	control_data = data.unpack('H*')[0]
+	
+	puts "patching..."
+	#62 75 74 74 6F 6E 44 65 62 75 67 to 62 75 74 74 6F 6E 20 20 20 20 20
+	puts "(#{"buttonDebug".unpack('H*')[0]} --> #{"button     ".unpack('H*')[0]})"
+	patchdata = control_data.gsub("buttonDebug".unpack('H*')[0], "button     ".unpack('H*')[0])
+	
+	puts "packing..."
+	control_data = [control_data].pack('H*')
+	patchdata = [patchdata].pack('H*')
+	
+	puts "fixing..."
+	#replace all 0d 0a pairs with 0a because of a windows newline quirk
+	File.write('mid.bin', control_data)
+	File.write('pat.bin', patchdata)
+
+	File.open('control.nds', 'wb') do |converted|
+	  File.open('mid.bin', 'rb').each_line do |line|
+	  #control_data.each_line do |line|
+		converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
+	  end
+	end
+	
+	File.open('converted.nds', 'wb') do |converted|
+	  File.open('pat.bin', 'rb').each_line do |line|
+	  #control_data.each_line do |line|
+		converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
+	  end
+	end
+    
     #in the xml menu files for de blob 2 (DS) there are four splash screens
     #these screens were able to be skipped during debugging by pressing L
     
@@ -90,99 +127,4 @@ end
 #program
 puts "Booted patcher."
 #add warnings?
-#menu()
-
-#replace="      "
-#infile = File.binread("db2-original.nds")
-#infile = File.open("","")
-outfile = "db2_out.nds"
-contfile = "db2_control.nds"
-outfile_data = ""
-count = 0
-
-def truncate(string, max)
-  string.length > max ? "#{string[0...max]}..." : string
-end
-
-#corrected version with leading 0s
-
-def bin_to_hex(s)
-  #s.each_byte.map { |b| "%02x" % b.to_i }.join
-  s.unpack('H*')[0]
-  #[s].pack("B*").unpack("H*")[0]#.first
-end
-
-#does not fix -1KiB issue
-def hex_to_bin(s)
-  #s.scan(/../).map { |x| x.hex.chr }.join
-  #[s].pack('H*')
-end
-
-data = nil
-
-puts "reading..."
-File.open("db2-original.nds", "rb") do |file|
-#file.chomp!
-  data = file.read
-end
-
-puts "unpacking..."
-#hex_data = data.unpack('H*')[0]
-control_data = bin_to_hex(data)
-
-puts "#{truncate(control_data, 500)}"
-
-puts "packing..."
-#outfile_data = [hex_data.gsub("buttonDebug".unpack('H*')[0], "button     ".unpack('H*')[0])].pack('H*')
-control_data = [control_data].pack('H*')
-
-#outfile_data = data.gsub("<buttonDebug", "<button     ")
-=begin
-data = File.open("file", 'rb' ) {|io| io.read}.unpack("C*").map do |val| 
-  val if val == 44
-	puts "44"
-end
-
-=begin
-File.open("db2-original.nds", "rb") do |f|
-  f.each_line do |line|
-	count = count+1
-    outfile_data = "#{outfile_data}#{line.gsub("<buttonDebug", "<button     ")}"
-	print "processed #{count} lines \r"
-  end
-end
-=end
-
-puts "fixing..."
-#replace all 0d 0a pairs with 0a because of a windows newline quirk
-
-converted = nil
-
-#File.write('mid.bin', control_data)
-#this function is extremely slow
-=begin
-File.open('converted.nds', 'wb') do |converted|
-  File.open('mid.bin', 'rb').each_line do |line|
-    converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
-  end
-end
-=end
-
-#tf = Tempfile.new('modbin') #delete removes null-byte errors
-#tf = control_data.delete("\u0000")
-
-File.write('mid.bin', control_data)
-
-File.open('converted.nds', 'wb') do |converted|
-  File.open('mid.bin', 'rb').each_line do |line|
-  #control_data.each_line do |line|
-    converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
-  end
-end
-
-puts "finishing..."
-#tf.close
-#tf.unlink
-#File.write(contfile, control_data)
-
-puts "Successfully wrote new data to file..."
+menu()
