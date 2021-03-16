@@ -1,6 +1,6 @@
 #file editing functions
 def replaceAscii(replace_filepath, replaced_ascii, new_ascii)
-  asciireplace_filedata = File.binread(replace_filepath) #added bin
+  asciireplace_filedata = File.read(replace_filepath) #removed bin
   asciireplace_newfiledata = asciireplace_filedata.gsub(replaced_ascii.to_s, new_ascii.to_s)
   #puts "Successfully replaced ascii data..."
   File.write(replace_filepath, asciireplace_newfiledata)
@@ -10,7 +10,9 @@ def replaceAscii(replace_filepath, replaced_ascii, new_ascii)
 end
 
 def replaceHex(filepath, replaced_hex, new_hex)
-    hexreplace_filedata = File.binread(filepath) #added bin
+puts replaced_hex
+puts new_hex
+    hexreplace_filedata = File.read(filepath) #removed bin
     hexreplace_newfiledata = hexreplace_filedata.gsub([replaced_hex].pack('H*'), [new_hex].pack('H*'))
     #puts "Successfully replaced hex data..."
     File.write(filepath, hexreplace_newfiledata)
@@ -45,7 +47,7 @@ def one_exec(rom_filepath)
   ascii_file_edit_option = gets.chop
 
   if ascii_file_edit_option == "y" || ascii_file_edit_option == "Y"
-    replaceHex(rom_filepath, "buttonDebug", "button     ")
+    replaceHex(rom_filepath, "buttonDebug".unpack('H*')[0], "button     ".unpack('H*')[0])
     #in the xml menu files for de blob 2 (DS) there are four splash screens
     #these screens were able to be skipped during debugging by pressing L
     
@@ -111,4 +113,97 @@ end
 #program
 puts "Booted patcher."
 #add warnings?
-menu()
+#menu()
+
+#replace="      "
+#infile = File.binread("db2-original.nds")
+#infile = File.open("","")
+outfile = "db2_out.nds"
+contfile = "db2_control.nds"
+outfile_data = ""
+count = 0
+
+
+
+data = nil
+
+puts "reading..."
+
+#=begin - rb
+File.open("db2-original.nds", "rb") do |file|
+#file.chomp!
+  data = file.read
+end
+#=end
+
+def truncate(string, max)
+  string.length > max ? "#{string[0...max]}..." : string
+end
+=begin
+def bin_to_hex(s)
+  s.each_byte.map { |b| b.to_s(16) }.join
+end
+=end
+#corrected version with leading 0s
+def bin_to_hex(s)
+	s.each_byte.map { |b| "%02x" % b.to_i }.join
+end
+def hex_to_bin(s)
+ s.scan(/../).map { |x| x.hex.chr }.join
+end
+
+puts "#{truncate(data, 500)}"
+
+puts "unpacking..."
+#hex_data = data.unpack('H*')[0]
+
+#this function is extremely slow
+control_data = bin_to_hex(data)
+
+#puts "#{truncate(hex_data, 500)}"
+puts "#{truncate(control_data, 500)}"
+
+puts "packing..."
+#outfile_data = [hex_data.gsub("buttonDebug".unpack('H*')[0], "button     ".unpack('H*')[0])].pack('H*')
+
+control_data = hex_to_bin(control_data)
+
+#outfile_data = data.gsub("<buttonDebug", "<button     ")
+=begin
+data = File.open("file", 'rb' ) {|io| io.read}.unpack("C*").map do |val| 
+  val if val == 44
+	puts "44"
+end
+
+=begin
+File.open("db2-original.nds", "rb") do |f|
+  f.each_line do |line|
+	count = count+1
+    outfile_data = "#{outfile_data}#{line.gsub("<buttonDebug", "<button     ")}"
+	print "processed #{count} lines \r"
+  end
+end
+=end
+
+puts "fixing..."
+#fix control
+#need to replace all 0d 0a pairs with 0a
+
+File.write('mid.bin', control_data)
+
+File.open('converted.nds', 'wb') do |converted|
+  File.open('mid.bin', 'rb').each_line do |line|
+    converted << line.gsub("\r\n", "\n") # Replace CRLF with LF
+  end
+end
+
+#print "\n"
+puts "writing..."
+#outfiledata = infile
+#File.write(outfile, outfile_data)
+
+File.write(contfile, control_data)
+
+
+
+puts "Successfully wrote new data to file..."
