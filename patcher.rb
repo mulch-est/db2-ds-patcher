@@ -1,7 +1,7 @@
 #modules
 module Patcher
 	#edits rom by substitution, maintaining exact file size
-	#takes three strings: filepath and replaced_data, new_data which are converted to hex
+	#takes three strings: filepath, and replaced_data, new_data which are converted to hex
 	def self.editBySub(rom_filepath, replaced_data, new_data)
 		#add check to make sure replaced and new data are the same size?
 		data = nil
@@ -61,12 +61,10 @@ end
 
 def one_exec(rom_filepath)
   puts "Are you sure you want to apply the Splash Screen Skip patch? Y/N"
-  puts "This will not make a copy! Please ensure you have an extra copy before proceeding!"
   ascii_file_edit_option = gets.chop
 
   if ascii_file_edit_option == "y" || ascii_file_edit_option == "Y"
-    
-	# b  u  t  t  o  n  D  e  b  u  g -->  b  u  t  t  o  n
+
 	#62 75 74 74 6F 6E 44 65 62 75 67 --> 62 75 74 74 6F 6E 20 20 20 20 20
 	Patcher::editBySub(rom_filepath, "buttonDebug", "button     ")
     
