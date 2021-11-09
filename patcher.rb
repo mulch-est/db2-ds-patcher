@@ -26,6 +26,8 @@ module Patcher
 			puts "packing..." #converts modified hex file data back to binary, stored in bin_data
 			bin_data = [patch_data].pack('H*')
 
+			#potentially write the if $windows_mode statement here so we can write to outfile
+			#instead of unnecessarily using mid.bin for ubuntu
 			File.write('mid.bin', bin_data) #store bin_data [without this step ~1 KiB of data is lost?]
 			patchfile_name = "#{File.basename(rom_filepath, ".nds")}_patched.nds" #setup outfile name
 
