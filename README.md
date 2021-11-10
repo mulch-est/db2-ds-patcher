@@ -1,6 +1,5 @@
 # de blob 2 (DS) Patcher
 
-![](https://img.shields.io/static/v1?label=&message=This%20patcher%20may%20not%20work%20for%20all%20roms&color=red)
 ### To Start
 Clone or download the repository.
 #### On Windows
